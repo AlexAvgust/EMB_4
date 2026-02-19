@@ -1,28 +1,33 @@
 #include <Arduino.h>
 
-void enableOutputs(){
+void led_init(){
   pinMode(15, OUTPUT);
   pinMode(16, OUTPUT);
   pinMode(17, OUTPUT);
+  for (u_int8_t i = 15; i <= 17; i++)
+  {
+    digitalWrite(i, LOW);
+  }
 }
 
-void enableLedWithDelay(int ledPin, int delayTime)
+void led_blink(u_int8_t ledPin, u_int16_t delayTime)
 {
+  delay(delayTime);
   digitalWrite(ledPin, HIGH);
   delay(delayTime);
   digitalWrite(ledPin, LOW);
-  delay(delayTime);
 }
 
 void setup()
 {
-  enableOutputs();
+  led_init();
+
 }
 
 void loop()
 {
-  enableLedWithDelay(15, 1000);
-  enableLedWithDelay(16, 1000);
-  enableLedWithDelay(17, 1000);
+  led_blink(15, 600);
+  led_blink(16, 600);
+  led_blink(17, 600);
   
 }
