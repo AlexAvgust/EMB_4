@@ -1,1 +1,4 @@
-void updateLeds(uint8_t currentLedMode);
+#pragma once
+
+#include <globals.h>
+void updateLeds(LED_MODE &currentLedMode);

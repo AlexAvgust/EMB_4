@@ -1,30 +1,25 @@
 #include <Arduino.h>
+#include "globals.h"
 
-// PINS
-constexpr uint8_t ledPin1 = 15;
-constexpr uint8_t ledPin2 = 16;
-
-// STATE
-//  TIMING FOR LEDs
 unsigned long lastFlickerUpdate = 0;
 bool flickerState = false;
 
-void updateLeds(uint8_t currentLedMode)
+void updateLeds(LED_MODE &currentLedMode)
 {
     unsigned long currentMillis = millis();
     int interval = 0;
 
     switch (currentLedMode)
     {
-    case 0:
+    case LED_MODE::SOLID:
         interval = 1000;
         break;
-    case 1:
+    case LED_MODE::BLINKING:
         interval = 100;
         break;
-    case 2:
-        digitalWrite(ledPin1, HIGH);
-        digitalWrite(ledPin2, HIGH);
+    case LED_MODE::FAST_FLICKER:
+        digitalWrite(GREEN_LED_PIN, HIGH);
+        digitalWrite(RED_LED_PIN, HIGH);
         break;
     }
 
@@ -33,7 +28,7 @@ void updateLeds(uint8_t currentLedMode)
         lastFlickerUpdate = currentMillis;
         flickerState = !flickerState;
 
-        digitalWrite(ledPin1, flickerState);
-        digitalWrite(ledPin2, !flickerState);
+        digitalWrite(GREEN_LED_PIN, flickerState);
+        digitalWrite(RED_LED_PIN, !flickerState);
     }
 }

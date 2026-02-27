@@ -1,76 +1,58 @@
 #include <Arduino.h>
 #include "leds/leds.h"
 #include "buttons/button.h"
-// TIMING
-const int debounceDelay = 50;
+#include "globals.h"
 
-// STATE
-unsigned long externalLastDebounceTime = 0;
-unsigned long internalLastDebounceTime = 0;
-uint8_t externalButtonState = LOW;
-uint8_t internalButtonState = LOW;
+#define DEBOUNCE_DELAY_MS 50
 
-uint8_t externalConfirmedState = LOW;
-uint8_t internalConfirmedState = LOW;
+ButtonState EXT_BTN = {EXTERNAL_BUTTON_PIN}; 
+ButtonState INT_BTN = {INTERNAL_BUTTON_PIN};
 
-uint8_t prevExternalConfirmedState = LOW;
-uint8_t prevInternalConfirmedState = LOW;
-
-// PINS
-constexpr uint8_t externalButtonPin = 4;
-constexpr uint8_t internalButtonPin = 0;
-
-void debounceButton(uint8_t buttonPin, uint8_t &buttonState, unsigned long &lastDebounceTime)
+void debounceButton(ButtonState &button)
 {
-  uint8_t reading = digitalRead(buttonPin);
+  uint8_t reading = digitalRead(button.pin);
 
-  if (reading != buttonState)
+  if (reading != button.lastRawReading)
   {
-    lastDebounceTime = millis();
+    button.lastDebounceTime = millis();
   }
 
-  if ((millis() - lastDebounceTime) > debounceDelay)
+  if ((millis() - button.lastDebounceTime) > DEBOUNCE_DELAY_MS)
   {
-    uint8_t *confirmed = nullptr;
-    if (buttonPin == externalButtonPin)
-      confirmed = &externalConfirmedState;
-    else if (buttonPin == internalButtonPin)
-      confirmed = &internalConfirmedState;
-
-    if (confirmed && reading != *confirmed)
+    if (reading != button.confirmedState)
     {
-      *confirmed = reading;
+      button.confirmedState = reading;
     }
   }
 
-  buttonState = reading;
+  button.lastRawReading = reading;
 }
 
-void handleButtons(uint8_t &currentLedMode)
+void handleButtons(LED_MODE &currentLedMode)
 {
-  debounceButton(externalButtonPin, externalButtonState, externalLastDebounceTime);
-  debounceButton(internalButtonPin, internalButtonState, internalLastDebounceTime);
-  bool externalRising = (externalConfirmedState == HIGH && prevExternalConfirmedState == LOW);
-  bool internalRising = (internalConfirmedState == HIGH && prevInternalConfirmedState == LOW);
+  debounceButton(EXT_BTN);
+  debounceButton(INT_BTN);
+  
+  bool externalRising = (EXT_BTN.confirmedState == HIGH && EXT_BTN.prevState == LOW);
+  bool internalRising = (INT_BTN.confirmedState == HIGH && INT_BTN.prevState == LOW);
 
-  if (externalConfirmedState == HIGH &&
-      internalRising)
+  if ((externalRising && INT_BTN.confirmedState == HIGH) || 
+      (internalRising && EXT_BTN.confirmedState == HIGH))
   {
     Serial.println("BOTH LEDS ON");
-    currentLedMode = 2;
+    currentLedMode = LED_MODE::SOLID;
   }
-  else if (internalRising)
+  else if (internalRising && EXT_BTN.confirmedState == LOW)
   {
     Serial.println("SLOW FLICKERING MODE");
-    currentLedMode = 0;
+    currentLedMode = LED_MODE::BLINKING;
   }
-  else if (externalRising)
+  else if (externalRising && INT_BTN.confirmedState == LOW)
   {
     Serial.println("FAST FLICKERING MODE");
-    currentLedMode = 1;
+    currentLedMode = LED_MODE::FAST_FLICKER;
   }
- 
 
-    prevExternalConfirmedState = externalConfirmedState;
-  prevInternalConfirmedState = internalConfirmedState;
+  EXT_BTN.prevState = EXT_BTN.confirmedState;
+  INT_BTN.prevState = INT_BTN.confirmedState;
 }

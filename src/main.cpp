@@ -1,26 +1,22 @@
 #include <Arduino.h>
 #include "leds/leds.h"
 #include "buttons/button.h"
+#include "globals.h"
 
-//PINS
-constexpr uint8_t externalButtonPin = 4;
-constexpr uint8_t internalButtonPin = 0;
-constexpr uint8_t ledPin1 = 15;
-constexpr uint8_t ledPin2 = 16;
-
-uint8_t currentLedMode = 0;
+LED_MODE MODE = LED_MODE::OFF;
 
 void setup()
 {
   Serial.begin(115200);
-  pinMode(externalButtonPin, INPUT_PULLUP);
-  pinMode(internalButtonPin, INPUT_PULLUP);
+  pinMode(EXTERNAL_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(INTERNAL_BUTTON_PIN, INPUT_PULLUP);
 
-  pinMode(ledPin1, OUTPUT);
-  pinMode(ledPin2, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
 }
 
 void loop()
-{ handleButtons(currentLedMode);
-  updateLeds(currentLedMode);
+{
+  handleButtons(MODE);
+  updateLeds(MODE);
 }
